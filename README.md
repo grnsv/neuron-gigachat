@@ -1,19 +1,26 @@
 # Neuron GigaChat Provider
 
-Неофициальный провайдер для **GigaChat** от Сбера для фреймворка **NeuronAI**.  
-Позволяет подключить LLM GigaChat к вашему агенту на базе NeuronAI без лишней боли (в процессе разработки 🙂).
+[![Packagist](https://img.shields.io/packagist/v/grnsv/neuron-gigachat.svg?style=flat-square)](https://packagist.org/packages/grnsv/neuron-gigachat)
+[![License](https://img.shields.io/github/license/grnsv/neuron-gigachat.svg?style=flat-square)](LICENSE)
+[![PHP](https://img.shields.io/badge/PHP-%5E8.2-blue?style=flat-square)](https://www.php.net/)
+[![NeuronAI](https://img.shields.io/badge/NeuronAI-Compatible-brightgreen?style=flat-square)](https://github.com/neuron-core/neuron-ai)
 
-> Packagist: https://packagist.org/packages/grnsv/neuron-gigachat  
-> NeuronAI: https://github.com/neuron-core/neuron-ai  
-> GigaChat: https://developers.sber.ru
+---
 
-## Установка
+Неофициальный провайдер **GigaChat** (Сбер) для фреймворка **NeuronAI**.  
+Позволяет подключить LLM GigaChat к вашему агенту на базе NeuronAI.
+
+---
+
+## ⚙️ Установка
 
 ```bash
 composer require grnsv/neuron-gigachat
 ```
 
-## Настройка на примере Laravel
+---
+
+## 🔧 Настройка (на примере Laravel)
 
 В `config/services.php` добавьте:
 
@@ -26,9 +33,11 @@ composer require grnsv/neuron-gigachat
 ],
 ```
 
-## Пример агента
+---
 
-Создаем агента:
+## 🧩 Пример агента
+
+Создаём агента:
 
 ```bash
 php vendor/bin/neuron make:agent App\\Neuron\\Agents\\MyAgent
@@ -67,13 +76,15 @@ final class MyAgent extends Agent
     public function instructions(): string
     {
         return (string) new SystemPrompt(
-            background: ['Ты дружелюбный ИИ-агент'],
+            background: ['Ты дружелюбный ИИ-агент.'],
         );
     }
 }
 ```
 
-## Отключение TLS (для разработки)
+---
+
+## 🧪 Отключение TLS (для разработки)
 
 Если сертификат Минцифры раздражает:
 
@@ -83,12 +94,15 @@ protected function provider(): AIProviderInterface
     return new GigaChat(
         config: new Config(...$this->config->get('services.gigachat')),
         cache: $this->cache,
-        verifyTLS: false, // отключаем проверку сертификата
+        // отключаем проверку сертификата
+        verifyTLS: false,
     );
 }
 ```
 
-## Поддержка сессий (контекстная память)
+---
+
+## 🧠 Контекстная память (сессии)
 
 ```php
 protected function provider(): AIProviderInterface
@@ -96,7 +110,8 @@ protected function provider(): AIProviderInterface
     return new GigaChat(
         config: new Config(...$this->config->get('services.gigachat')),
         cache: $this->cache,
-        httpOptions: new HttpClientOptions(headers: ['X-Session-ID' => $this->getSessionId()]), // сессия передается в заголовке `X-Session-ID`
+        // сессия передается в заголовке `X-Session-ID`
+        httpOptions: new HttpClientOptions(headers: ['X-Session-ID' => $this->getSessionId()]),
     );
 }
 
@@ -111,7 +126,9 @@ private function getSessionId(): string
 }
 ```
 
-## Тестовая команда
+---
+
+## 🧰 Тестовая команда
 
 ```bash
 php artisan make:command TestAgent
@@ -134,7 +151,7 @@ final class TestAgent extends Command
     public function handle(MyAgent $agent)
     {
         $response = $agent->chat(
-            new UserMessage('Когда уже ИИ захватит этот мир?')
+            new UserMessage('Когда уже ИИ захватит этот мир?'),
         );
 
         $this->info($response->getContent());
@@ -142,4 +159,73 @@ final class TestAgent extends Command
 }
 ```
 
+---
+
+## 📊 Структурированный вывод (Structured Output)
+
+Пример DTO:
+
+```php
+<?php
+
+namespace App\Neuron\DTO;
+
+use NeuronAI\StructuredOutput\SchemaProperty;
+
+class Output
+{
+    #[SchemaProperty(description: 'Значение вероятности в процентах.', required: true)]
+    public float $percent;
+
+    #[SchemaProperty(description: 'Причина выбора такого значения.', required: false)]
+    public string $reason;
+}
+```
+
+Использование в агенте:
+
+```php
+final class MyAgent extends Agent
+{
+    public function instructions(): string
+    {
+        return (string) new SystemPrompt(
+            background: ['Ты специалист по правдоподобным предсказаниям. Даешь оценку вероятности события в процентах.'],
+        );
+    }
+
+    protected function getOutputClass(): string
+    {
+        return Output::class;
+    }
+}
+```
+
+Пример вызова:
+
+```php
+final class TestAgent extends Command
+{
+    public function handle(MyAgent $agent)
+    {
+        $response = $agent->structured(
+            new UserMessage('Какова вероятность в процентах, что ИИ в этом году захватит мир?'),
+        );
+
+        $this->info(json_encode($response, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+    }
+}
+```
+
+---
+
+## 🤝 Contributing
+
 Если будут вопросы или идеи — PR и issue приветствуются 👋
+
+---
+
+## 🔗 Links
+
+- **NeuronAI** — [github.com/neuron-core/neuron-ai](https://github.com/neuron-core/neuron-ai)  
+- **GigaChat API** — [developers.sber.ru](https://developers.sber.ru)

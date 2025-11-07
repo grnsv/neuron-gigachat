@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace NeuronAI\Providers\GigaChat\Exceptions;
 
-use NeuronAI\Exceptions\NeuronException;
+use NeuronAI\Exceptions\ProviderException;
 
-class AuthenticationException extends NeuronException
+class AuthenticationException extends ProviderException
 {
 }

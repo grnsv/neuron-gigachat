@@ -6,15 +6,13 @@ namespace NeuronAI\Providers\GigaChat;
 
 use GuzzleHttp\Client;
 use NeuronAI\Chat\Messages\Message;
-use NeuronAI\Chat\Messages\ToolCallMessage;
 use NeuronAI\Exceptions\ProviderException;
 use NeuronAI\Providers\AIProviderInterface;
-use NeuronAI\Providers\HandleWithTools;
+use NeuronAI\Providers\GigaChat\Messages\ToolCallMessage;
 use NeuronAI\Providers\HasGuzzleClient;
 use NeuronAI\Providers\HttpClientOptions;
 use NeuronAI\Providers\MessageMapperInterface;
 use NeuronAI\Providers\ToolPayloadMapperInterface;
-use NeuronAI\Tools\ToolInterface;
 use Psr\SimpleCache\CacheInterface;
 
 class GigaChat implements AIProviderInterface
@@ -24,7 +22,6 @@ class GigaChat implements AIProviderInterface
     use HandleWithTools;
     use HandleChat;
     use HandleStream;
-    use HandleStructured;
 
     /**
      * The main URL of the provider API.
@@ -88,17 +85,10 @@ class GigaChat implements AIProviderInterface
      */
     protected function createToolCallMessage(array $message): Message
     {
-        $tools = \array_map(
-            fn (array $item): ToolInterface => $this->findTool($item['function']['name'])
-                ->setInputs(
-                    \json_decode((string) $item['function']['arguments'], true)
-                )
-                ->setCallId($item['id']),
-            $message['tool_calls']
-        );
+        $tool = $this->findTool($message['function_call']['name'])
+            ->setInputs($message['function_call']['arguments'])
+            ->setCallId($message['functions_state_id']);
 
-        $result = new ToolCallMessage('', $tools);
-
-        return $result->addMetadata('tool_calls', $message['tool_calls']);
+        return new ToolCallMessage('', [$tool]);
     }
 }
